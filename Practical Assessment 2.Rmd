@@ -1,0 +1,257 @@
+---
+title: "Data Wrangling (Data Preprocessing)"
+author: "Karthik Kolume (Student ID : S3857825)"
+subtitle: Practical assessment 2
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+#  html_notebook: default
+---
+
+## Submission Steps:
+
+## Required packages 
+
+The packages required to reproduce the report are,
+
+```{r}
+# This is the R chunk for the required packages
+library(outliers)
+library(readr)
+library(dplyr)
+library(readxl)
+library(gdata)
+library(tidyr)
+library(Hmisc)
+library(rvest)
+library(knitr)
+```
+
+
+## Executive Summary 
+
+This report describes the preprocessing steps of "World happiness report" for each year from year 2005 to year 2021 for 162 countries and represent their Happiness Score and the Rank of each country based on the their Ladder score. 
+
+Steps taken to preprocess the data are:
+
+* Data extracted/downloaded from https://www.kaggle.com/ajaypalsinghlo/world-happiness-report-2021 and loaded in the R-studio.
+
+* Understanding the Data used by using summary and Structure functions and converting the relevant data types to factors for better processing of data.
+
+* Tidy and Manipulate the Data set in order to find the Ranks of the Countries with highest Happiness/Ladder score.
+
+* Scanning the data to find the missing values present in the data set. Replacing the missing values with the average score over all the years of consideration.
+
+* Transforming the data to get the normal distribution and understanding/Analyzing the data insights and interpreting the right results.
+
+
+## Data 
+
+* Two sets of Data have been extracted/Downloaded from site https://www.kaggle.com/ajaypalsinghlo/world-happiness-report-2021 and loaded in the R-studio as shown in the below R-chunk. 
+
+* Used the World happiness datasets. Dataset 1 consists of the World happiness report from year 2005 to year 2020 and Dataset 2 consists of the World happiness report of year 2021 alone.
+
+* These datasets consists of many variables along with the Countries and Ladder score. We are considering only 2 variables from the original datasets i.e; Countries and Ladder score.
+
+```{r}
+setwd("~/Documents/RMIT/RMIT Work/DW_worksheets")
+World_happiness_2021<- read_csv("world-happiness-report-2021.csv")
+World_happiness<- read_csv("world-happiness-report.csv")
+head(World_happiness)
+head(World_happiness_2021)
+```
+
+## Understand 
+
+To understand the Data,
+
+* Firstly, Structure of the data is found using str() function.
+
+* The data sets used consists of multiple data types(Numeric and Character) 
+
+* The variable "year" has been changed from numeric to Ordered factor in the below R-chunk because the variable "year" is a categorical variable, which needs to be ordered and labelled. 
+
+* Summary and Structure functions are used below to understand the data efficiently.
+
+
+```{r}
+# This is the R chunk for the Understand Section
+str(World_happiness)
+
+World_happiness$year<- factor(World_happiness$year,levels= c('2005', '2006', '2007', '2008', '2009','2010','2011','2012','2013','2014','2015','2016','2017','2018','2019','2020'), ordered=TRUE,
+                    labels = c('Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5','Year 6','Year 7','Year 8','Year 9','Year 10','Year 11','Year 12','Year 13','Year 14','Year 15','Year 16'))
+
+str(World_happiness)
+summary(World_happiness)
+str(World_happiness_2021)
+summary(World_happiness_2021)
+
+```
+
+
+##	Tidy & Manipulate Data I 
+
+In this section, we Tidy the data and manipulate the data to meet our requirements from this data.
+
+Steps:
+
+* Remove the unwanted columns which are not required for the preprocessing.
+
+* The dataset 1 cannot to used to determine the score for each country alone.In order to tidy this data we need to use the package called "tidyr".Since, multiple variables are stored in rows, the pivot_wider() function to generate columns from rows. 
+
+* Variable "Country name" is changed to "Country".
+
+* Similarly we rename another dataset as well.
+
+```{r}
+# This is the R chunk for the Tidy & Manipulate Data I 
+World_happiness <- World_happiness [,-c(4,5,6,7,8,9,10,11)]
+head(World_happiness)
+WH_Tidy<-pivot_wider(World_happiness, names_from = "year", values_from = "Life Ladder")
+WH_Tidy<- WH_Tidy%>% rename(c("Country" = "Country name"))
+head(WH_Tidy)
+World_happiness_2021 <- World_happiness_2021 [,-c(2,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20)]
+World_happiness_2021<- World_happiness_2021%>% rename(c("Country" = "Country name" ,
+                      "Year 17" = "Ladder score"))
+head(World_happiness_2021)
+```
+
+##	Tidy & Manipulate Data II 
+
+Join both the datasets,find the average score and rank them accordingly.
+
+Steps:
+
+* We join both the datasets using left_join function. Joining is done with respect to variable "Country".
+
+* New column "Average" is introduced to find the Average/mean of the ladder Score for each country across all the years considered.
+
+* Changed the datatype of "Average" to numeric.
+
+* Assigned the order of the rows with respect to "Average" in the decreasing format in order to find the countries which have highest and lowest scores.
+
+* To assign the rankings of the countries,new column "Rank" is introduced and assigned accordingly starting from 1 being the highest Score.
+
+```{r}
+# This is the R chunk for the Tidy & Manipulate Data II 
+merge<- WH_Tidy %>% left_join(World_happiness_2021, by = "Country")
+head(merge)
+merge<- merge %>% mutate(Average= rowMeans(merge[,2:18], na.rm=TRUE))
+head(merge)
+merge<-merge[,c(1,19,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18)] 
+merge$Average<-as.numeric(merge$Average)
+merge<-merge[order(merge$Average,decreasing=TRUE),]
+head(merge)
+merge<- merge %>% mutate(Rank = row_number())
+head(merge)
+merge<-merge[,c(1,2,20,18,17,15,3,4,5,6,7,8,9,10,11,12,13,14,16,19)] 
+head(merge)
+```
+
+
+##	Scan I 
+
+Scan the Dataset obtained and identify if there are any missing values, special values and obvious errors (i.e. inconsistencies)in the dataset.
+Steps:
+
+* Identification of missing values present in the data set using is.na() function.
+
+* Finding the number of missing values using sum(is.na()) function.
+
+* Replacing the missing values with the average value of the row.
+
+* Identification of special values and obvious errors (i.e. inconsistencies) using is.special function as shown in the below R-chunk which is zero in our data.
+
+```{r}
+# This is the R chunk for the Scan I
+head(is.na(merge))
+sum(is.na(merge))
+
+merge$'Year 4'[is.na(merge$'Year 4')]<- merge$Average[is.na(merge$'Year 4')]
+merge$'Year 5'[is.na(merge$'Year 5')]<- merge$Average[is.na(merge$'Year 5')]
+merge$'Year 6'[is.na(merge$'Year 6')]<- merge$Average[is.na(merge$'Year 6')]
+merge$'Year 7'[is.na(merge$'Year 7')]<- merge$Average[is.na(merge$'Year 7')]
+merge$'Year 8'[is.na(merge$'Year 8')]<- merge$Average[is.na(merge$'Year 8')]
+merge$'Year 9'[is.na(merge$'Year 9')]<- merge$Average[is.na(merge$'Year 9')]
+merge$'Year 10'[is.na(merge$'Year 10')]<- merge$Average[is.na(merge$'Year 10')]
+merge$'Year 11'[is.na(merge$'Year 11')]<- merge$Average[is.na(merge$'Year 11')]
+merge$'Year 12'[is.na(merge$'Year 12')]<- merge$Average[is.na(merge$'Year 12')]
+merge$'Year 13'[is.na(merge$'Year 13')]<- merge$Average[is.na(merge$'Year 13')]
+merge$'Year 14'[is.na(merge$'Year 14')]<- merge$Average[is.na(merge$'Year 14')]
+merge$'Year 15'[is.na(merge$'Year 15')]<- merge$Average[is.na(merge$'Year 15')]
+merge$'Year 16'[is.na(merge$'Year 16')]<- merge$Average[is.na(merge$'Year 16')]
+merge$'Year 17'[is.na(merge$'Year 17')]<- merge$Average[is.na(merge$'Year 17')]
+merge$'Year 1'[is.na(merge$'Year 1')]<- merge$Average[is.na(merge$'Year 1')]
+merge$'Year 2'[is.na(merge$'Year 2')]<- merge$Average[is.na(merge$'Year 2')]
+merge$'Year 3'[is.na(merge$'Year 3')]<- merge$Average[is.na(merge$'Year 3')]
+
+is.special <- function(x){
+if (is.numeric(x)) (is.infinite(x) | is.nan(x))
+}
+sum(is.special(sapply(merge, is.special)))
+
+head(merge)
+```
+
+
+##	Scan II
+
+Scan the numeric data for outliers.
+
+Steps:
+
+* Apply boxplot() function to numeric data and find if there are any outliers in the dataset.
+
+* From the Box plot, we can find that there is a chance of having an outlier in the "Year 15" and "Year 17" columns which can be ignored because, If the outlier does not change the results but does affect assumptions, you may drop the outlier.
+
+* Find the summary of the column "Average" using z.scores for the normally distributed data. From the method of z score, we found that there are no possible outliers present in the data.
+
+```{r}
+# This is the R chunk for the Scan II
+
+merge[,4:20] %>% boxplot(main="Boxplot Life score per year", ylab="Life Score", col = "grey")
+head(merge$Average)
+merge$Average %>% boxplot(main="Boxplot Avearage Life score", ylab="Average Score of all countries", col = "grey")
+Outlier_det <- log(merge$Average)
+hist(Outlier_det)
+z.scores <- Outlier_det %>%  scores(type = "z")
+z.scores %>% summary()
+which(abs(z.scores) >3)
+
+```
+
+
+##	Transform 
+
+Data transformation is the most important step in the data preprocessing for the development and deployment of statistical analysis and machine learning models. 
+
+The purpose of this transformation is to  decrease  the  skewness  and  convert  the  distribution  into  a  normal distribution.
+
+Steps:
+
+* The variable Average is not normally distributed from the qq plot and shapiro wilk test performed below. 
+
+* In order to achieve normal distribution we need to Transform the data by using different Transformation methods such as Mathematical operations(log, square-root, square, etc.) and BoxCox method.
+
+* For our data, since it is slightly not symmetric, we use Logarithmic method to transform the data and achieve the linear Distribution.
+
+* From the obtained symmetric distribution, we can use tranformed data for the development and deployment of statistical analysis and machine learning models further and gain insights and predict the future trends.
+
+```{r}
+# This is the R chunk for the Transform Section
+hist(merge$Average)
+shapiro.test(merge$Average)
+qqnorm(merge$Average,main="qq plot")
+qqline(merge$Average,lwd=1,col="red")
+
+Transform_merge <- log(merge$Average)
+hist(Transform_merge )
+shapiro.test(Transform_merge )
+qqnorm(Transform_merge,main="qq plot")
+qqline(Transform_merge,lwd=1,col="red")
+```
+
+<br>
+<br>
+
