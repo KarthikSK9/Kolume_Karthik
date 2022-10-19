@@ -1,0 +1,6 @@
+DEPARTMENT(deptnum, descrip, instname, deptname, state, postcode)
+ACADEMIC(acnum, deptnum*, famname, givename, initials, title)
+PAPER(panum, title)
+AUTHOR(panum*, acnum*)
+FIELD(fieldnum, id, title)
+INTEREST(fieldnum*, acnum*, descrip)

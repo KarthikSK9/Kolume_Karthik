@@ -1,0 +1,32 @@
+```{r, fig.width=10,fig.height=10}
+library(readr)
+Val <- read_csv("Valuation_of_new_companies2021.csv")
+#View(Val)
+library(ggplot2)
+library(scales)
+library(dplyr)
+library(readxl)
+library(gdata)
+library(tidyr)
+library(Hmisc)
+library(rvest)
+
+Val$`Valuation($B)`<- substring(Val$`Valuation($B)`,2,5)
+Val$`Valuation($B)`<-as.numeric(Val$`Valuation($B)`)
+merge<-Val
+
+
+month<-substring(merge$`Listing Date`,4,6)
+merge<-merge%>%mutate('Month' = month) #%>% filter(month == "Jan")
+
+
+x<- ggplot(merge, aes(x=merge$Company, y=merge$`Valuation($B)`,fill=`Listing type`,width=0.85)) + 
+  geom_bar(stat = "identity",position="dodge") + labs(x="",y="") + theme_bw()+ theme(axis.text=element_text(size=15),
+        axis.title=element_text(size=15,face="italic")) + coord_flip() 
+x <- x + geom_text(
+              aes(label = merge$`Listing Date`, group = Company),hjust = -0.5, colour="black", size=5, fontface="italic") + labs(
+    title ="Companies Going Public in 2021: Visualizing IPO Valuations", x = "Company",
+    y = "Valuation")  + theme(axis.text = element_text(size=10)) 
+x
+ 
+```

@@ -1,0 +1,98 @@
+---
+title: "Assignment 2"
+subtitle: "Deconstruct, Reconstruct Web Report"
+author: "Karthik Kolume (S3857825)"
+output: html_document
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+# Do not change these settings!
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+### {.tabset} 
+
+Click the **Original**, **Code** and **Reconstruction** tabs to read about the issues and how they were fixed. 
+
+#### Original
+
+<br>
+<center>
+<img src="https://www.visualcapitalist.com/wp-content/uploads/2021/08/Companies-Going-Public-in-2021-08.jpg" width="80%">
+</center>
+<center>*VisualCapitalist(2021)*</center>
+<br>
+
+**Objective**
+
+The objective of this visualization is to provide comparisons between the different Companies that have gone public in the Global market since 2021 and this visualization supposedly aims to showcase the data from beginning of the year 2021. The investor can get a brief idea on how the companies are performing so far and predict/plan his/her investment accordingly.
+
+The visualization chosen had the following three main issues:
+
+* Issue 1: It fails to show the global view of the data. It does not display relative numbers/proportions of multiple categories. It is quite difficult to compare the total valuation of companies with respect to months considered. There is a possibility that the viewer might choose a wrong selection for his investment.
+* Issue 2: Accurate estimations cannot be made from the visualization shown.This allows for more visual error when understanding the visualization.
+* Issue 3: It does not show the changes over time. Difficult to estimate key values at a glance. Viewer needs to check across all months of 2021 and then choose the right option.
+
+**Reference**
+
+* Visual Capitalist - Market section. (2021). *Companies Gone Public in 2021: Visualizing IPO Valuations*. Accessed on September 14, 2021, from  public website: https://www.visualcapitalist.com/companies-going-public-in-2021-visualizing-ipo-valuations/#
+
+
+#### Code
+
+The following code was used to fix the issues identified in the original. 
+
+```{r, fig.width=10,fig.height=10}
+#Load all the required Libraries
+library(readr)
+library(ggplot2)
+library(scales)
+library(dplyr)
+library(readxl)
+library(gdata)
+library(tidyr)
+library(Hmisc)
+library(rvest)
+
+#Load the Data file extracted from the website mentioned in the Data Reference section.
+Val <- read_csv("Valuation_of_new_companies2021.csv")
+
+#Using Substring function on Valuation to remove the character data type
+Val$`Valuation($B)`<- substring(Val$`Valuation($B)`,2,5)
+
+#Converting the variable Valuation to numeric from character
+Val$`Valuation($B)`<-as.numeric(Val$`Valuation($B)`)
+
+#Assigning the Data frame created above to new object "merge"
+merge<-Val
+
+#Extracting Month from the "Listing date" column.
+month<-substring(merge$`Listing Date`,4,6)
+
+#Add a new column called "month" to the data.
+merge<-merge%>%mutate('Count' = month) #%>% filter(month == "Jan")
+
+#Using ggplot function to create a final Visualization
+x<- ggplot(merge, aes(x=reorder(merge$Company, merge$`Listing Date`), y=merge$`Valuation($B)`,fill=`Listing type`,width=0.85)) + 
+  geom_bar(stat = "identity") + theme_bw()+ theme(axis.text=element_text(size=15),
+        axis.title=element_text(size=15,face="italic")) + coord_flip() 
+x <- x + geom_text(
+              aes(label = merge$`Listing Date`, group = Company),hjust = -0.5, colour="black", size=3, fontface="italic") + labs(
+    title ="Companies Gone Public in 2021: Visualizing IPO Valuations", x = "Company",
+    y = "Valuation")  + theme(axis.text = element_text(size=10)) 
+ 
+```
+
+**Data Reference**
+
+* Visual Capitalist - Market section. (2021). *Companies Going Public in 2021: Visualizing IPO Valuations*. Accessed on September 14, 2021, from  public website: https://www.visualcapitalist.com/companies-going-public-in-2021-visualizing-ipo-valuations/#
+
+#### Reconstruction
+
+The following plot fixes the main issues in the original.
+
+```{r fig.align="center", echo = FALSE,fig.width=10,fig.height=10}
+x
+```
+
